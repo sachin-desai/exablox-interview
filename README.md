@@ -44,16 +44,17 @@ data: 980 bytes
 sha2:  32 bytes
 crc:    4 bytes
 
-The first floppy, guaranteed to intact first, contains the file length, index
+The first floppy, guaranteed to  be intact, contains the file length, index
 value, SHA2 checksum of the entire file, and CRC-32 signature.
 
 The receiver, upon receiving the first floppy, checks the SHA2 key to see if the
 file already exists. In the event of a mismatch, the file is assembled from the
 out-of-order floppies. In the event of a checksum mismatch, or a missing index,
-the receiver is unable to reconstruct the file.
+the receiver is unable to reconstruct the file, indicating a breach or
+corruption.
 
 2) -- To minimize the number of floppies mailed, a data dedupe scheme, based on
-Merkel hash tree is proposed. This minimizes the the costly operation of
+Merkle hash tree is proposed. This minimizes the the costly operation of
 shipping heavy floppies, until requested by the receipient. However, the tree
 would aggregate floppies in groups of 1MB to reduce height, and minimize costly
 hash operations.
@@ -68,7 +69,7 @@ A2. PROPOSAL
 --------------------------------------------------------------------------------
 The secret key shared between sender and reciever can be easily compromised in
 transit, or post receipt. What mechanism would you utilize to ensure security
-and prevent man in the middle attacks?
+and prevent a man in the middle attacks?
 
 Would the nature of file updates (static vs. dynamic) affect your choice of
-Merkel tree implementation? Would a bloom filter be a better fit?
+Merkle tree implementation? Would a Bloom filter be a better fit?
