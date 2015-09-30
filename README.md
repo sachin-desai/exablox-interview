@@ -34,7 +34,7 @@ A1. PROPOSAL
 scenario. A given file of N bytes, is broken up into (N/datasize) blocks, or
 floppies. Within the block, eight bytes represent the index, for a given
 floppy. This allows for a total of 2^64 floppies per file transfered. To meet
-the data integrity requirement, each block is encrypted using SHA2, along with a
+the data integrity requirement, each block is hashed using SHA2, along with a
 shared secret key between sender and receiver. To ensure the cryptographic hash
 value is not corrupted inflight, a CRC-32 calculation is appended. Each floppy
 would have information in the following format:
