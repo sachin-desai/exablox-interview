@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -g
 INCLUDES = -I.
-LIBS = -lssl -lcrypto
-SRCS = main.c send.c recv.c hash.c utils.c
+LIBS = -lcrypto
+SRCS = main.c send.c recv.c hash.c
 OBJS = $(SRCS:.c=.o)
 
 MAIN = exablox
