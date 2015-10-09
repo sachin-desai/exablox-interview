@@ -31,7 +31,7 @@ write_meta_floppy(struct floppy_meta* fm)
 
 	fp = fopen(META_FILE_NAME, "w");
 	if (!fp) {
-		printf("Unable to open metadata %s file\n", META_FILE_NAME);
+		error_print("Unable to open metadata file '%s'\n", META_FILE_NAME);
 		status = false;
 		goto error;
 	}
@@ -42,13 +42,12 @@ write_meta_floppy(struct floppy_meta* fm)
 		sizeof(fm->meta_info.total_shards), 1, fp);  
 	fwrite(fm->meta_info.sha, sizeof(fm->meta_info.sha), 1, fp);  
 
-	if (fm->meta_info.total_shards == 1) {
-		printf("Please mail the following floppy to the receiver:\n");
-		printf("floppy.1\n");
-	} else {
-		printf("Please mail the following floppies to the receiver:\n"); 
-		printf("floppy.1 to floppy.%lu\n", fm->meta_info.total_shards);
-	}
+	printf("Please mail the following %lu floppies to the receiver:\n",
+		fm->meta_info.total_shards + 1);
+	if (fm->meta_info.total_shards == 1)
+		printf("-- floppy.meta, plus floppy.1\n");
+	else
+		printf("-- floppy.meta, plus floppy.1 to floppy.%lu\n", fm->meta_info.total_shards);
 		
 	debug_print("WR %s, file size bytes %lu, total shards %lu\n",
 		META_FILE_NAME, fm->meta_info.file_sz, fm->meta_info.total_shards); 
@@ -88,7 +87,7 @@ write_shard_floppy(struct floppy_shard* fs, unsigned long shard_bytes)
 
 	fp = fopen(shard_file, "w");
 	if (!fp) {
-		printf("Unable to open shard floppy '%s'\n", shard_file);
+		error_print("Unable to open shard floppy '%s'\n", shard_file);
 		status = false;
 		goto error;
 	}
@@ -131,7 +130,7 @@ create_floppies(const char* src_file)
 	struct floppy_shard fs;
 
 	if (access(src_file, F_OK) < 0) {
-		printf("Invalid source file '%s' to convert into floppies\n", src_file);
+		error_print("Unable to access file '%s'\n", src_file);
 		status = false;
 		goto error;
 	}
@@ -139,7 +138,7 @@ create_floppies(const char* src_file)
 	hash_init(&ctx);	
 	fp = fopen(src_file, "r");
 	if (!fp) {
-		printf("Unable to open source file '%s'\n", src_file);
+		error_print("Unable to open file '%s'\n", src_file);
 		status = false;
 		goto error;
 	}

@@ -33,7 +33,7 @@ read_and_verify_shard_floppy(struct floppy_meta* fm, struct floppy_shard* fs,
 	last_shard_sz = fm->meta_info.file_sz % SHARD_DATA_SZ; 
 
 	if (!(fp = fopen(shard_file, "r"))) {
-		printf("Unable to read %s\n", shard_file); 
+		error_print("Unable to read %s\n", shard_file);
 		return false;
 	}
 
@@ -50,7 +50,7 @@ read_and_verify_shard_floppy(struct floppy_meta* fm, struct floppy_shard* fs,
 	hash_final(sha, &ctx);
 
 	if (memcmp(sha, fs->shard_info.sha, SHA256_DIGEST_LENGTH)) {
-		printf("%s is corrupted; possible attack or floppy is damaged\n", shard_file);
+		error_print("'%s' is corrupted; possible attack or floppy is damaged\n", shard_file);
 		return false;
 	}
 
@@ -79,7 +79,7 @@ process_shard_floppy(struct floppy_meta* fm, char* shard_file, FILE* fo)
 
 	status = read_and_verify_shard_floppy(fm, &fs, shard_file, &shard_bytes); 
 	if (status == false) {
-		printf("Checksum for '%s' does not match\n", shard_file); 
+		error_print("Checksum for '%s' does not match\n", shard_file);
 		goto error;
 	}
 
@@ -112,7 +112,7 @@ process_meta_floppy(struct floppy_meta* fm)
 
 	fp = fopen(META_FILE_NAME, "r");
 	if (!fp) {
-		printf("Unable to read %s\n", META_FILE_NAME); 
+		error_print("Unable to open metadata file '%s'\n", META_FILE_NAME);
 		status = false;
 		goto error;
 	}
@@ -155,10 +155,9 @@ process_floppies(char* floppy_list)
 	if (status == false)
 		goto error;
 	
-
 	fo = fopen(OUTPUT_FILE_NAME, "w+");
 	if (!fo) {
-		printf("Unable to open destination file '%s'\n", OUTPUT_FILE_NAME);
+		error_print("Unable to open destination file '%s'\n", OUTPUT_FILE_NAME);
 		status = false;
 		goto error;
 	}

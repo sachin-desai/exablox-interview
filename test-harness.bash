@@ -33,7 +33,6 @@ for i in $(seq 1 $USER_INPUT); do
 	fi
 done
 
-echo $FLOPPY_LIST
 ./exablox -r $FLOPPY_LIST
 
 # external utilities for verification
