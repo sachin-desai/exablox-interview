@@ -1,7 +1,6 @@
 # Sachin Desai
-# Exablox Interview project
 # Copyright 2015
-# https://github.com/sachin-desai/exablox-interview.git
+# https://github.com/sachin-desai/
 
 Q1. THE WEIGHT OF DATA
 --------------------------------------------------------------------------------
