@@ -40,10 +40,10 @@ read_and_verify_shard_floppy(struct floppy_meta* fm, struct floppy_shard* fs,
 	fread(fs->shard_blob, sizeof(fs->shard_blob), 1, fp);
 	fclose(fp);
 
+	*shard_bytes = sizeof(fs->shard_info.data);
 	if (fs->shard_info.idx == fm->meta_info.total_shards)
-		*shard_bytes = last_shard_sz;
-	else
-		*shard_bytes = sizeof(fs->shard_info.data);
+		if (last_shard_sz) /* ensure not equal to 984 */
+			*shard_bytes = last_shard_sz;
 
 	hash_init(&ctx);
 	hash_update(&ctx, (unsigned char*) fs->shard_info.data, *shard_bytes);
@@ -78,6 +78,7 @@ process_shard_floppy(struct floppy_meta* fm, char* shard_file, FILE* fo)
 	struct floppy_shard fs;
 
 	status = read_and_verify_shard_floppy(fm, &fs, shard_file, &shard_bytes); 
+	debug_print("RD %s: shard bytes: %lu\n", shard_file, shard_bytes);
 	if (status == false) {
 		error_print("Checksum for '%s' does not match\n", shard_file);
 		goto error;
@@ -87,7 +88,6 @@ process_shard_floppy(struct floppy_meta* fm, char* shard_file, FILE* fo)
 	fseek(fo, offset, SEEK_SET); 
 	fwrite(fs.shard_info.data, shard_bytes, 1, fo);
 
-	debug_print("RD %s: shard bytes: %lu\n", shard_file, shard_bytes);
 
 error:
 	return status;
