@@ -91,14 +91,13 @@ verify_shard(mt_t* mt, f_meta* fm, f_shard* fs,
 
 	/* check for corruption */
 	if (memcmp(sha, fs->shard_info.sha, SHA256_DIGEST_LENGTH)) {
-		error_print("Possible attack, or floppy '%s' is corrupted\n",
+		error_print("Possible attack, or '%s' is corrupted\n",
 			shard_file);
 		ret = 1;
 		goto error;
 	}
 
 	/* check merkle tree to see if shard is part of file */
-	hash_print(shard_file, fs->shard_info.sha);
 	if (mt_verify(mt, fs->shard_info.sha, SHA256_DIGEST_LENGTH,
 		fs->shard_info.idx - 1) == MT_ERR_ROOT_MISMATCH) {
 		printf("Data from floppy '%s' not part of original file\n", shard_file);
@@ -164,7 +163,6 @@ process_meta_floppy(f_meta* fm, const char* meta_file)
 {
 	int ret = 0;
 	FILE* fp = NULL;
-	//mt_hash_t mt_root;
 
 	fp = fopen(meta_file, "r");
 	if (!fp) {
@@ -182,11 +180,6 @@ process_meta_floppy(f_meta* fm, const char* meta_file)
 		goto error;
 	}	
 
-	/*mt_get_root(mt, mt_root);
-	if(memcmp(mt_root, fm->meta_info.sha, SHA256_DIGEST_LENGTH))
-		printf("DEBUG: root did not match!\n");*/
-
-
 error:
 	return ret;
 }
@@ -194,6 +187,7 @@ error:
 /* 
  * mt_generate
  *  	Create merkle tree on the receiver side.
+ *  	NOTE: this is debug code; has to go
  *
  * input: 
  * 	mt: Merkle tree to generate
@@ -205,15 +199,34 @@ error:
 static void
 mt_generate(mt_t *mt, f_meta* fm)
 {
+	f_shard fs;
 	char buf[64];
+	SHA256_CTX ctx;
 	unsigned long i;
-	struct floppy_shard fs;
+	unsigned long shard_bytes;
+	unsigned long last_shard_sz;
+	unsigned char sha[SHA256_DIGEST_LENGTH];
 
-	for (i = 1; i <= fm->meta_info.total_shards-2; i++) {
+	for (i = 1; i <= fm->meta_info.total_shards - 3; i++) {
 		sprintf(buf, "floppy.%lu", i);
-		read_shard_blob(buf, &fs);
-		mt_add(mt, fs.shard_info.sha, SHA256_DIGEST_LENGTH);
+		if (read_shard_blob(buf, &fs))
+			return;
+
+		/* check if partial data floppy */
+		shard_bytes = sizeof(fs.shard_info.data);
+		if (fs.shard_info.idx == fm->meta_info.total_shards) {
+			last_shard_sz = fm->meta_info.file_sz % SHARD_DATA_SZ;
+			if (last_shard_sz != 0) /* if exactly SHARD_DATA_SZ bytes*/
+				shard_bytes = last_shard_sz;
+		}
+
+		hash_init(&ctx);
+		hash_update(&ctx, (unsigned char*) fs.shard_info.data, shard_bytes);
+		hash_final(sha, &ctx);
+
+		mt_add(mt, sha, SHA256_DIGEST_LENGTH);
 		debug_print("MT: Add floppy.%lu to hash tree", i);
+		memset(&fs, 0, sizeof(f_shard));
 	}
 }
 
@@ -229,7 +242,7 @@ mt_generate(mt_t *mt, f_meta* fm)
  * 	      or unable to process any floppy in list
  */
 int
-process_floppies(struct usr_args* args)
+process_floppies(usr_args* args)
 {
 	int i;
 	int ret = 0;
@@ -238,7 +251,6 @@ process_floppies(struct usr_args* args)
 	struct floppy_meta fm;
 	mt_hash_t mt_root;
 
-	// add sha value to meta floppy, and compared to mt above 
 	ret = process_meta_floppy(&fm, args->meta_file);
 	if (ret)
 		goto error;
@@ -247,12 +259,9 @@ process_floppies(struct usr_args* args)
 	mt = mt_create();
 	mt_generate(mt, &fm);
 	mt_get_root(mt, mt_root);
-	mt_print(mt);
 	/* -- end hack -- */
 
 	/* see if file already exists */
-	hash_print("calculated meta", mt_root);
-	hash_print("received meta", fm.meta_info.sha);
 	if(!memcmp(mt_root, fm.meta_info.sha, SHA256_DIGEST_LENGTH)) {
 		printf("File exists in merkle tree, no floppy processing required\n");
 		ret = 1;
@@ -271,12 +280,6 @@ process_floppies(struct usr_args* args)
 		ret = process_shard_floppy(mt, &fm, args->floppy_list[i], fo);
 		if (ret)
 			goto error;
-	}
-
-	for (i = 0; i < args->floppy_count; i++) {
-		// count all bitmap values set. 
-		// if equal to floppy count, then success
-		// else print floppies that require shipment
 	}
 
 error:
