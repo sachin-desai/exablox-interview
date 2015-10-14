@@ -1,21 +1,26 @@
 CC = gcc
-CFLAGS = -Wall -g
-INCLUDES = -I. -I./merkle-tree/src -L./merkle-tree/src
-LIBS = -lcrypto  -lMerkleTree
-SRCS = exablox.c send.c recv.c hash.c
+CFLAGS = -Wall -g -std=gnu99
+LFLAGS = -L.
+INCL = -I./merkle
+LIBS = -lcrypto -lmerkletree
+
+SRC = src
+MERKLE = merkle
+
+SRCS = $(wildcard $(SRC)/*.c $(MERKLE)/*.c)
 OBJS = $(SRCS:.c=.o)
 
 MAIN = exablox
 
-.PHONY = all depend clean
+.PHONY = all clean
 
-all: $(MAIN)
+all: clean $(MAIN)
 
 $(MAIN): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+	@$(CC) $(CFLAGS) $(INCL) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	@$(CC) $(CFLAGS) $(INCL) -c $< -o $@
 
 clean: 
-	$(RM) *.o *~ $(MAIN)
+	@$(RM) $(SRC)/*.o $(MERKLE)/*.o *~ $(MAIN)
