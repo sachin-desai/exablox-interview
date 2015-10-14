@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g -std=gnu99
-LFLAGS = -L.
+LFLAGS = -L./lib
 INCL = -I./merkle
 LIBS = -lcrypto -lmerkletree
 
