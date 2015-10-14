@@ -1,13 +1,13 @@
 CC = gcc
 CFLAGS = -Wall -g -std=gnu99
 LFLAGS = -L./lib
-INCL = -I./merkle
+INCL = -I./mrkl
 LIBS = -lcrypto -lmerkletree
 
 SRC = src
-MERKLE = merkle
+MRKL = mrkl
 
-SRCS = $(wildcard $(SRC)/*.c $(MERKLE)/*.c)
+SRCS = $(wildcard $(SRC)/*.c $(MRKL)/*.c)
 OBJS = $(SRCS:.c=.o)
 
 MAIN = exablox
@@ -23,4 +23,4 @@ $(MAIN): $(OBJS)
 	@$(CC) $(CFLAGS) $(INCL) -c $< -o $@
 
 clean: 
-	@$(RM) $(SRC)/*.o $(MERKLE)/*.o *~ $(MAIN)
+	@$(RM) $(SRC)/*.o $(MRKL)/*.o *~ $(MAIN)
