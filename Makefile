@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g -std=gnu99
+CFLAGS = -Wall -std=gnu99
 LFLAGS = -L./lib
 INCL = -I./mrkl
 LIBS = -lcrypto -lmerkletree
@@ -8,19 +8,25 @@ SRC = src
 MRKL = mrkl
 
 SRCS = $(wildcard $(SRC)/*.c $(MRKL)/*.c)
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:%.c=%.o)
 
-MAIN = exablox
+
+BIN = exablox
 
 .PHONY = all clean
+all: clean $(BIN)
 
-all: clean $(MAIN)
+debug: CFLAGS += -ggdb
+debug: clean $(BIN)
 
-$(MAIN): $(OBJS)
-	@$(CC) $(CFLAGS) $(INCL) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+release: CFLAGS += -O3 -fgnu89-inline -Wno-error=unused-function
+release: clean $(BIN)
+
+$(BIN): $(OBJS)
+	@$(CC) $(CFLAGS) $(INCL) -o $(BIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 .c.o:
 	@$(CC) $(CFLAGS) $(INCL) -c $< -o $@
 
 clean: 
-	@$(RM) $(SRC)/*.o $(MRKL)/*.o *~ $(MAIN)
+	@$(RM) $(SRC)/*.o $(MRKL)/*.o *~ $(BIN)
