@@ -6,6 +6,6 @@
 void hash_init(SHA256_CTX* ctx);
 void hash_update(SHA256_CTX* ctx, void* data, unsigned long len);
 void hash_final(unsigned char* sha, SHA256_CTX* ctx);
-void hash_print(char * msg, unsigned char* md);
+void hash_print(const char * msg, unsigned char* md);
 
 #endif

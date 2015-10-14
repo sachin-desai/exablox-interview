@@ -3,11 +3,9 @@
 
 #include <openssl/sha.h>
 
-#define OUTPUT_FILE_NAME "final.file"
-#define META_FILE_NAME	"floppy.meta"
-#define SHARD_DATA_SZ 	 984 /* debug size */
+#define SHARD_DATA_SZ 	 984
 
-struct floppy_meta {
+typedef struct floppy_meta {
 	union {
 		struct meta_info {
 			unsigned long idx; /* must be zero */
@@ -17,9 +15,9 @@ struct floppy_meta {
 		} meta_info;
 		unsigned char meta_blob[sizeof(struct meta_info)];	
 	};
-};
+} f_meta;
 
-struct floppy_shard {
+typedef struct floppy_shard {
 	union {
 		struct shard_info {
 			unsigned long idx;
@@ -28,6 +26,6 @@ struct floppy_shard {
 		} shard_info;
 		unsigned char shard_blob[sizeof(struct shard_info)];
 	};
-};
+} f_shard;
 
 #endif

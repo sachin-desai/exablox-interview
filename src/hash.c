@@ -15,13 +15,14 @@
  * 	void
  */
 void
-hash_print(char * msg, unsigned char* sha)
+hash_print(const char* msg, unsigned char* sha)
 {
 	int i;
 
-	debug_print("%s-->>", msg);
+	printf("%s: ", msg);
 	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-		debug_print("%02x", sha[i]);
+		printf("%02X", sha[i]);
+	printf("\n");
 }
 
 /* 
