@@ -41,7 +41,6 @@ would have information in the following format:
 id:     8 bytes
 data: 980 bytes
 sha2:  32 bytes
-crc:    4 bytes
 
 The first floppy, guaranteed to  be intact, contains the file length, index
 value, SHA2 checksum of the entire file, and CRC-32 signature.
@@ -66,9 +65,5 @@ some aspect of your skills better than the other questions and answers.
 
 A2. PROPOSAL
 --------------------------------------------------------------------------------
-The secret key shared between sender and reciever can be easily compromised in
-transit, or post receipt. What mechanism would you utilize to ensure security
-and prevent a man in the middle attacks?
-
 Would the nature of file updates (static vs. dynamic) affect your choice of
 Merkle tree implementation? Would a Bloom filter be a better fit?
