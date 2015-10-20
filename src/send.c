@@ -44,7 +44,6 @@ wr_meta_floppy(mt_t* mt, f_meta* fm, const char* meta_file)
 	fwrite(&fm->meta_info.file_sz, sizeof(fm->meta_info.file_sz), 1, fp);
 	fwrite(&fm->meta_info.total_shards,
 		sizeof(fm->meta_info.total_shards), 1, fp);  
-	fwrite(fm->meta_info.sha, sizeof(fm->meta_info.sha), 1, fp);  
 	mt_get_root(mt, mt_root);
 	fwrite(mt_root, SHA256_DIGEST_LENGTH, 1, fp);  
 
@@ -67,7 +66,7 @@ error:
 }
 
 /* 
- * write_shard_floppy 
+ * wr_shard_floppy 
  *	Create floppy from original sharded data. File naming is "floppy.X".
  *
  * input: 
@@ -78,7 +77,7 @@ error:
  * 	ret: fail ret if unable to open destination shard floppy file
  */
 static int
-write_shard_floppy(mt_t* mt, f_shard* fs, unsigned long shard_bytes)
+wr_shard_floppy(mt_t* mt, f_shard* fs, unsigned long shard_bytes)
 {
 	FILE* fp = NULL;
 	SHA256_CTX ctx;
@@ -163,7 +162,7 @@ create_floppies(usr_args* args)
 			fs.shard_info.idx = i++;
 			fm.meta_info.file_sz += shard_bytes;
 			hash_update(&meta_ctx, fs.shard_info.data, shard_bytes);
-			ret = write_shard_floppy(mt, &fs, shard_bytes);
+			ret = wr_shard_floppy(mt, &fs, shard_bytes);
 			if (ret)
 				goto error;
 	}
