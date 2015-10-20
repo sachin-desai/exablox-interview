@@ -52,7 +52,7 @@ wr_meta_floppy(mt_t* mt, f_meta* fm, const char* meta_file)
 	if (fm->meta_info.total_shards == 1)
 		printf("-- %s\n-- floppy.1\n", meta_file);
 	else
-		printf("-- %s\n-- floppy.1 to floppy.%lu\n",
+		printf("-- %s\n-- floppy.1 through floppy.%lu\n",
 			meta_file, fm->meta_info.total_shards);
 		
 	debug_print("WR %s, file size bytes %lu, total shards %lu\n",
