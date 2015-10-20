@@ -4,10 +4,10 @@ LFLAGS = -L./lib
 INCL = -I./mrkl
 LIBS = -lcrypto -lmerkletree
 
-SRC = src
+MAIN = src
 MRKL = mrkl
 
-SRCS = $(wildcard $(SRC)/*.c $(MRKL)/*.c)
+SRCS = $(wildcard $(MAIN)/*.c $(MRKL)/*.c)
 OBJS = $(SRCS:%.c=%.o)
 
 
@@ -29,4 +29,4 @@ $(BIN): $(OBJS)
 	@$(CC) $(CFLAGS) $(INCL) -c $< -o $@
 
 clean: 
-	@$(RM) $(SRC)/*.o $(MRKL)/*.o *~ $(BIN)
+	@$(RM) $(MAIN)/*.o $(MRKL)/*.o *~ $(BIN)

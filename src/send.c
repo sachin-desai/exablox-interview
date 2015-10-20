@@ -44,7 +44,7 @@ wr_meta_floppy(mt_t* mt, f_meta* fm, const char* meta_file)
 	fwrite(&fm->meta_info.file_sz, sizeof(fm->meta_info.file_sz), 1, fp);
 	fwrite(&fm->meta_info.total_shards,
 		sizeof(fm->meta_info.total_shards), 1, fp);  
-	//fwrite(fm->meta_info.sha, sizeof(fm->meta_info.sha), 1, fp);  
+	fwrite(fm->meta_info.sha, sizeof(fm->meta_info.sha), 1, fp);  
 	mt_get_root(mt, mt_root);
 	fwrite(mt_root, SHA256_DIGEST_LENGTH, 1, fp);  
 
@@ -106,8 +106,6 @@ write_shard_floppy(mt_t* mt, f_shard* fs, unsigned long shard_bytes)
 
 	mt_add(mt, fs->shard_info.sha, SHA256_DIGEST_LENGTH);
 
-	//hash_print(shard_file, fs->shard_info.sha);
-
 	debug_print("WR floppy.%lu, shard bytes %zu, total bytes %zu\n",
 		fs->shard_info.idx, shard_bytes, sizeof(fs->shard_blob));
 	
@@ -133,7 +131,7 @@ int
 create_floppies(usr_args* args)
 {
 	mt_t* mt = NULL;
-	//SHA256_CTX meta_ctx;
+	SHA256_CTX meta_ctx;
 	FILE *fp = NULL;
 	int ret = 0;
 	unsigned long i = 1;
@@ -151,7 +149,7 @@ create_floppies(usr_args* args)
 		goto error;
 	}
 		
-	//hash_init(&meta_ctx);	
+	hash_init(&meta_ctx);	
 	fp = fopen(args->src_file, "r");
 	if (!fp) {
 		error_print("Unable to open file '%s'\n", args->src_file);
@@ -164,13 +162,13 @@ create_floppies(usr_args* args)
 		fread(fs.shard_info.data, 1, sizeof(fs.shard_info.data), fp))) {
 			fs.shard_info.idx = i++;
 			fm.meta_info.file_sz += shard_bytes;
-			//hash_update(&meta_ctx, fs.shard_info.data, shard_bytes);
+			hash_update(&meta_ctx, fs.shard_info.data, shard_bytes);
 			ret = write_shard_floppy(mt, &fs, shard_bytes);
 			if (ret)
 				goto error;
 	}
 
-	//hash_final(fm.meta_info.sha, &meta_ctx);
+	hash_final(fm.meta_info.sha, &meta_ctx);
 	wr_meta_floppy(mt, &fm, args->meta_file);
 
 	mt_delete(mt);

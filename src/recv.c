@@ -11,6 +11,7 @@
 #include "mt_config.h"
 #include "merkletree.h"
 #include "mt_arr_list.h"
+#include "bitmap.h"
 
 /* 
  * read_shard_blob
@@ -53,7 +54,7 @@ error:
  * 	shard_bytes: total data bytes from the shard file 
  *
  * output:
- * 	ret: fail status if unable to read shard floppy, or floppy sha does not match
+ * 	ret: fail status if floppy sha does not match
  */
 static int
 verify_shard(mt_t* mt, f_meta* fm, f_shard* fs,
@@ -65,13 +66,8 @@ verify_shard(mt_t* mt, f_meta* fm, f_shard* fs,
 	unsigned char sha[SHA256_DIGEST_LENGTH];
 
 	ret = read_shard_blob(shard_file, fs);
-	if (ret)
-		goto error;
-
-	/* see if user gave us a meta floppy instead */
-	if (fs->shard_info.idx == 0) {
-		error_print("User error; metadata floppy '%s' included in list\n",
-			shard_file); 
+	if (ret) {
+		error_print("Unable to read shard file %s\n", shard_file);
 		ret = 1;
 		goto error;
 	}
@@ -100,12 +96,9 @@ verify_shard(mt_t* mt, f_meta* fm, f_shard* fs,
 	/* check merkle tree to see if shard is part of file */
 	if (mt_verify(mt, fs->shard_info.sha, SHA256_DIGEST_LENGTH,
 		fs->shard_info.idx - 1) == MT_ERR_ROOT_MISMATCH) {
-		printf("Data from floppy '%s' not part of original file\n", shard_file);
+		error_print("Data from floppy '%s' not part of original file\n", shard_file);
 		ret = 1;
 		goto error;
-	} else {
-		// received good files++
-		//add to valid list of floppies
 	}
 
 error:
@@ -125,7 +118,7 @@ error:
  * 	ret: fail status if unable to read shard floppy, or floppy sha does not match
  */
 static int
-process_shard_floppy(mt_t* mt, f_meta* fm, char* shard_file, FILE* fo)
+process_shard_floppy(mt_t* mt, f_meta* fm, char* shard_file, FILE* fo, bitmap *bm)
 {
 	int ret = 0;
 	long offset = 0;
@@ -207,10 +200,13 @@ mt_generate(mt_t *mt, f_meta* fm)
 	unsigned long last_shard_sz;
 	unsigned char sha[SHA256_DIGEST_LENGTH];
 
-	for (i = 1; i <= fm->meta_info.total_shards - 3; i++) {
+	hash_init(&ctx);
+	for (i = 1; i <= fm->meta_info.total_shards; i++) {
 		sprintf(buf, "floppy.%lu", i);
-		if (read_shard_blob(buf, &fs))
+		if (read_shard_blob(buf, &fs)) {
+			debug_print("Unable to open received file %s\n", buf);
 			return;
+		}
 
 		/* check if partial data floppy */
 		shard_bytes = sizeof(fs.shard_info.data);
@@ -220,14 +216,12 @@ mt_generate(mt_t *mt, f_meta* fm)
 				shard_bytes = last_shard_sz;
 		}
 
-		hash_init(&ctx);
 		hash_update(&ctx, (unsigned char*) fs.shard_info.data, shard_bytes);
-		hash_final(sha, &ctx);
-
-		mt_add(mt, sha, SHA256_DIGEST_LENGTH);
 		debug_print("MT: Add floppy.%lu to hash tree", i);
 		memset(&fs, 0, sizeof(f_shard));
 	}
+	hash_final(sha, &ctx);
+	mt_add(mt, sha, SHA256_DIGEST_LENGTH);
 }
 
 /* 
@@ -245,21 +239,24 @@ int
 process_floppies(usr_args* args)
 {
 	int i;
-	int ret = 0;
+	int err = 0, ret = 0;
 	mt_t* mt = NULL;
 	static FILE* fo = NULL;
-	struct floppy_meta fm;
+	f_meta fm;
 	mt_hash_t mt_root;
+	bitmap bm;
 
 	ret = process_meta_floppy(&fm, args->meta_file);
 	if (ret)
 		goto error;
 
+	bm_create(&bm, fm.meta_info.total_shards);
+	bm_clear_all(&bm);
+
 	/* hack to create local dedupe tree */
 	mt = mt_create();
 	mt_generate(mt, &fm);
 	mt_get_root(mt, mt_root);
-	/* -- end hack -- */
 
 	/* see if file already exists */
 	if(!memcmp(mt_root, fm.meta_info.sha, SHA256_DIGEST_LENGTH)) {
@@ -277,10 +274,18 @@ process_floppies(usr_args* args)
 	}
 
 	for (i = 0; i < args->floppy_count; i++) {
-		ret = process_shard_floppy(mt, &fm, args->floppy_list[i], fo);
-		if (ret)
-			goto error;
+		process_shard_floppy(mt, &fm, args->floppy_list[i], fo, &bm);
+		if (!bm_is_set(&bm, i + 1)) {
+			if (!err)
+				printf("Please request that ");
+			printf("floppy.%d ", i + 1);
+			err = 1;
+		} 
 	}
+
+	if (err)
+		printf("be delivered.\n");
+
 
 error:
 	if (mt)
@@ -288,6 +293,8 @@ error:
 
 	if (fo) 
 		fclose(fo);
+	
+	bm_destroy(&bm);
 
 	return ret;
 }
